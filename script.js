@@ -40,3 +40,16 @@ function createGrid($container) {
   $table.append($tbody);
   $container.append($table);
 }
+
+function createBoard(n) {
+  var board = [];
+  
+  for (var i = 0; i < n; i++) {
+    board[i] = [];
+    
+    for (var j = 0; j < n; j++) {
+      board[i][j] = 0;
+    }
+  }
+  return board;
+}
