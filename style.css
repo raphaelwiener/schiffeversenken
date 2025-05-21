@@ -33,3 +33,17 @@ div#boards {
   padding: 10px;
   border-radius: 8px;
 }
+
+
+.board div.cell {
+  width: 30px;
+  height: 30px;
+  background-color: #aad3df;
+  border: 1px solid #333;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.board div.cell.miss {
+  background-color: #fff;
+}
