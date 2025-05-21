@@ -14,7 +14,7 @@ function createGrid($container) {
   var $thead = $('<thead></thead>');
   var $headRow = $('<tr></tr>').append('<th></th>');
 
-  letters.forEach(function(l) {
-    $headRow.append('<th>' + l + '</th>');
-  });
+  for (var k = 0; k < letters.length; k++) {
+    $headRow.append('<th>' + letters[k] + '</th>');
+  }
 }
