@@ -23,3 +23,13 @@ div#boards {
   gap: 40px;
   padding: 20px;
 }
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(10, 30px);
+  grid-template-rows: repeat(10, 30px);
+  gap: 2px;
+  background-color: #0077be;
+  padding: 10px;
+  border-radius: 8px;
+}
