@@ -21,5 +21,6 @@ function createGrid($container) {
   $thead.append($headRow);
   $table.append($thead);
 
+  var $tbody = $('<tbody></tbody>');
   
 }
