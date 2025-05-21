@@ -7,7 +7,6 @@ $(document).ready(function() {
 
 function createGrid($container) {
   $container.empty();
-  
   var letters = 'ABCDEFGHIJ'.split('');
   var size = 10;
   var $table = $('<table></table>');
@@ -22,5 +21,22 @@ function createGrid($container) {
   $table.append($thead);
 
   var $tbody = $('<tbody></tbody>');
-  
+
+  for (var i = 0; i < size; i++) {
+    var $tr = $('<tr></tr>').append('<th>' + (i + 1) + '</th>');
+    
+    for (var j = 0; j < size; j++) {
+      $tr.append(
+        $('<td></td>')
+          .attr('data-row', i)
+          .attr('data-col', j)
+          .addClass('cell')
+      );
+    }
+
+    $tbody.append($tr);
+  }
+
+  $table.append($tbody);
+  $container.append($table);
 }
