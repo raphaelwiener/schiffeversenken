@@ -17,4 +17,9 @@ function createGrid($container) {
   for (var k = 0; k < letters.length; k++) {
     $headRow.append('<th>' + letters[k] + '</th>');
   }
+
+  $thead.append($headRow);
+  $table.append($thead);
+
+  
 }
