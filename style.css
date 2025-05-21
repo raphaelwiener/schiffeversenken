@@ -1,6 +1,25 @@
 html, body {
   margin: 0;
-  padding: 0;
   height: 100%;
-  font-family: sans-serif;
+}
+
+.container {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  height: 100%;
+}
+
+header {
+  background-color: #333;
+  color: #fff;
+  padding: 10px 0;
+  text-align: center;
+}
+
+div#boards {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 40px;
+  padding: 20px;
 }
