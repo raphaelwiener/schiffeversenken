@@ -34,7 +34,6 @@ div#boards {
   border-radius: 8px;
 }
 
-
 .board div.cell {
   width: 30px;
   height: 30px;
@@ -42,6 +41,10 @@ div#boards {
   border: 1px solid #333;
   box-sizing: border-box;
   cursor: pointer;
+}
+
+.board div.cell.hit {
+  background-color: #f00;
 }
 
 .board div.cell.miss {
