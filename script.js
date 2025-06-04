@@ -1,4 +1,6 @@
 var playerBoard, computerBoard, playerShips, computerShips, state;
+var availableMoves = [];
+var canPlay = true;
 
 
 $(document).ready(function() {
@@ -14,6 +16,14 @@ $(document).ready(function() {
   state = $('#status');
 
   $('#computerBoard').on('click', 'td.cell', handleCellClick);
+
+  for (var i = 0; i < 10; i++) {
+    for (var j = 0; j < 10; j++) {
+      availableMoves.push({ r: i, c: j });
+    }
+  }
+
+  renderPlayerShips();
 });
 
 function createGrid($container) {
@@ -107,38 +117,182 @@ function placeShips(board) {
   return ships;
 }
 
+function markShipIfSunk(ships, boardId, boardData, r, c) {
+  for (var s = 0; s < ships.length; s++) {
+    var ship = ships[s];
+    var belongsToThisShip = false;
+
+    for (var t = 0; t < ship.length; t++) {
+      if (ship[t].r === r && ship[t].c === c) {
+        belongsToThisShip = true;
+        break;
+      }
+    }
+
+    if (belongsToThisShip === false) {
+      continue;
+    }
+    
+    var allHit = true;
+    for (var u = 0; u < ship.length; u++) {
+      var rr = ship[u].r;
+      var cc = ship[u].c;
+      var selector = '#' + boardId + ' td[data-row="' + rr + '"][data-col="' + cc + '"]';
+      if ($(selector).hasClass('hit') === false) {
+        allHit = false;
+        break;
+      }
+    }
+    
+    if (allHit === true) {
+      for (var v = 0; v < ship.length; v++) {
+        var rr2 = ship[v].r;
+        var cc2 = ship[v].c;
+        var sel2 = '#' + boardId + ' td[data-row="' + rr2 + '"][data-col="' + cc2 + '"]';
+        $(sel2).removeClass('hit');
+        $(sel2).addClass('sunk');
+
+        state.text('Schiff Versenkt! Du darfst nochmal spielen.');
+      }
+    }
+
+    break;
+  }
+}
+
 function handleCellClick() {
+  if (!canPlay) {
+    return;
+  }
+  
+  canPlay = false;
+
   var $cell = $(this);
   var r = parseInt($cell.attr('data-row'), 10);
   var c = parseInt($cell.attr('data-col'), 10);
 
-  if ($cell.hasClass('hit') || $cell.hasClass('miss')) {
+  if ($cell.hasClass('hit')) {
+    canPlay = true;
+    return;
+  }
+
+  if ($cell.hasClass('miss')) {
+    canPlay = true;
+    return;
+  }
+
+  if ($cell.hasClass('sunk')) {
+    canPlay = true;
     return;
   }
 
   if (computerBoard[r][c] === 1) {
     $cell.addClass('hit');
-    state.text('Treffer!');
+    state.text('Treffer! Du darfst nochmal spielen.');
+
+    markShipIfSunk(computerShips, 'computerBoard', computerBoard, r, c);
+    canPlay = true;
+    
+    checkWin();
+    
+    return;
   } else {
     $cell.addClass('miss');
-    state.text('Wasser!');
+    state.text('Wasser! Computer ist dran...');
+
+    window.setTimeout(function() {
+      computerTurn();
+    }, 2000);
+
   }
-  checkWin();
 }
 
 function checkWin() {
   var allSunk = true;
   for (var i = 0; i < 10; i++) {
     for (var j = 0; j < 10; j++) {
-      if (computerBoard[i][j] === 1 &&
-          !$('#computerBoard td[data-row="' + i + '"][data-col="' + j + '"]').hasClass('hit')) {
-        allSunk = false;
+      if (computerBoard[i][j] === 1) {
+        var sel = '#computerBoard td[data-row="' + i + '"][data-col="' + j + '"]';
+        var hasHit  = $(sel).hasClass('hit');
+        var hasSunk = $(sel).hasClass('sunk');
+        
+        if (hasHit === false && hasSunk === false) {
+          allSunk = false;
+        }
       }
     }
   }
-  
+
   if (allSunk) {
     state.text('Du hast gewonnen! 🎉');
+    $('#computerBoard').off('click', 'td.cell', handleCellClick);
+  }
+}
+
+function renderPlayerShips() {
+  for (var s = 0; s < playerShips.length; s++) {
+    var ship = playerShips[s];
+    for (var i = 0; i < ship.length; i++) {
+      var cell = ship[i];
+      $('#playerBoard td[data-row="' + cell.r + '"][data-col="' + cell.c + '"]')
+        .addClass('ship');
+    }
+  }
+}
+
+function getComputerMove() {
+  var idx = randomInt(availableMoves.length);
+  var move = availableMoves.splice(idx, 1)[0];
+  return move;
+}
+
+function computerTurn() {
+  if (availableMoves.length === 0) {
+    return;
+  }
+
+  var idx = randomInt(availableMoves.length);
+  var move = availableMoves.splice(idx, 1)[0];
+  var r = move.r;
+  var c = move.c;
+
+  var $cell = $('#playerBoard td[data-row="' + r + '"][data-col="' + c + '"]');
+
+  if (playerBoard[r][c] === 1) {
+    $cell.addClass('hit');
+
+    var colLetter = String.fromCharCode(65 + c);
+    state.text('Computer trifft auf ' + colLetter + (r + 1) + '!');
+
+    markShipIfSunk(playerShips, 'playerBoard', playerBoard, r, c);
+  } else {
+    $cell.addClass('miss');
+
+    var colLetter = String.fromCharCode(65 + c);
+    state.text('Computer verfehlt auf ' + colLetter + (r + 1) + '!');
+  }
+
+  checkPlayerWin();
+
+  canPlay = true;
+}
+
+function checkPlayerWin() {
+  var allSunk = true;
+  for (var i = 0; i < 10; i++) {
+    for (var j = 0; j < 10; j++) {
+      if (playerBoard[i][j] === 1) {
+        var sel = '#playerBoard td[data-row="' + i + '"][data-col="' + j + '"]';
+        var hasHit  = $(sel).hasClass('hit');
+        var hasSunk = $(sel).hasClass('sunk');
+        if (hasHit === false && hasSunk === false) {
+          allSunk = false;
+        }
+      }
+    }
+  }
+  if (allSunk) {
+    state.text('Verloren! Der Computer hat gewonnen. 💀');
     $('#computerBoard').off('click', 'td.cell', handleCellClick);
   }
 }
