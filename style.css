@@ -53,6 +53,10 @@ div#boards {
   padding: 0;
 }
 
+.board td.cell.ship {
+  background-color: #666;
+}
+
 .board td.cell.hit {
   background-color: #f00;
 }
@@ -61,6 +65,6 @@ div#boards {
   background-color: #fff;
 }
 
-.board td.cell.ship {
-  background-color: #666;
+.board td.cell.sunk {
+  background-color: #800000;
 }
