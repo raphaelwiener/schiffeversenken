@@ -60,3 +60,7 @@ div#boards {
 .board td.cell.miss {
   background-color: #fff;
 }
+
+.board td.cell.ship {
+  background-color: #666;
+}
