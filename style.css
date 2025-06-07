@@ -37,7 +37,7 @@ div#boards {
   height: 30px;
   text-align: center;
   font-weight: bold;
-  color: #000;
+  color: #fff;               /* Zahlen und Buchstaben in Weiß */
   background-color: #0077be;
 }
 
@@ -67,4 +67,33 @@ div#boards {
 
 .board td.cell.sunk {
   background-color: #800000;
+}
+
+footer {
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  padding: 10px 0;
+  font-size: 14px;
+}
+
+footer a {
+  color: #ddd;
+  text-decoration: none;
+  margin: 0 8px;
+}
+
+footer a:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+#status {
+  background-color: rgb(87, 0, 87);
+  color: #ffffff;
+  text-align: center;
+  padding: 8px 0;
+  font-weight: bold;
+  border-top: 2px solid #333;
+  border-bottom: 2px solid #333;
 }
