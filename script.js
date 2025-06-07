@@ -151,13 +151,13 @@ function markShipIfSunk(ships, boardId, boardData, r, c) {
         var sel2 = '#' + boardId + ' td[data-row="' + rr2 + '"][data-col="' + cc2 + '"]';
         $(sel2).removeClass('hit');
         $(sel2).addClass('sunk');
-
-        state.text('Schiff Versenkt! Du darfst nochmal spielen.');
       }
+      return true;
     }
 
     break;
   }
+  return false;
 }
 
 function handleCellClick() {
@@ -188,13 +188,17 @@ function handleCellClick() {
 
   if (computerBoard[r][c] === 1) {
     $cell.addClass('hit');
-    state.text('Treffer! Du darfst nochmal spielen.');
 
-    markShipIfSunk(computerShips, 'computerBoard', computerBoard, r, c);
+    var wasSunk = markShipIfSunk(computerShips, 'computerBoard', computerBoard, r, c);
+    if (wasSunk === true) {
+      state.text('Schiff versenkt! Du darfst weiterhin schießen.');
+    } else {
+      state.text('Treffer! Du darfst nochmal schießen.');
+    }
+
     canPlay = true;
-    
     checkWin();
-    
+
     return;
   } else {
     $cell.addClass('miss');
@@ -226,6 +230,8 @@ function checkWin() {
   if (allSunk) {
     state.text('Du hast gewonnen! 🎉');
     $('#computerBoard').off('click', 'td.cell', handleCellClick);
+
+    alert('Herzlichen Glückwunsch, du hast gewonnen!');
   }
 }
 
@@ -262,19 +268,30 @@ function computerTurn() {
     $cell.addClass('hit');
 
     var colLetter = String.fromCharCode(65 + c);
-    state.text('Computer trifft auf ' + colLetter + (r + 1) + '!');
+    var wasSunk = markShipIfSunk(playerShips, 'playerBoard', playerBoard, r, c);
 
-    markShipIfSunk(playerShips, 'playerBoard', playerBoard, r, c);
+    if (wasSunk === true) {
+      var colLetter = String.fromCharCode(65 + c);
+      state.text('Computer versenkt dein Schiff auf ' + colLetter + (r + 1) + '! Er ist nochmal dran...');
+    } else {
+      var colLetter = String.fromCharCode(65 + c);
+      state.text('Computer trifft auf ' + colLetter + (r + 1) + '! Er ist nochmal dran...');
+    }
+
+    checkPlayerWin();
+    setTimeout(function() {
+      computerTurn();
+    }, 2000);
+
+    return;
   } else {
     $cell.addClass('miss');
 
     var colLetter = String.fromCharCode(65 + c);
     state.text('Computer verfehlt auf ' + colLetter + (r + 1) + '!');
+
+    canPlay = true;
   }
-
-  checkPlayerWin();
-
-  canPlay = true;
 }
 
 function checkPlayerWin() {
@@ -294,5 +311,7 @@ function checkPlayerWin() {
   if (allSunk) {
     state.text('Verloren! Der Computer hat gewonnen. 💀');
     $('#computerBoard').off('click', 'td.cell', handleCellClick);
+
+    alert('Leider hast du verloren. Versuch es noch einmal!');
   }
 }
