@@ -1,6 +1,9 @@
 var playerBoard, computerBoard, playerShips, computerShips, state;
 var availableMoves = [];
+var targetQueue = [];
+var targetHits = [];
 var canPlay = true;
+var gameOver = false;
 
 
 $(document).ready(function() {
@@ -25,6 +28,7 @@ $(document).ready(function() {
 
   renderPlayerShips();
 });
+
 
 function createGrid($container) {
   $container.empty();
@@ -56,18 +60,18 @@ function createGrid($container) {
     }
 
     $tbody.append($tr);
-  }
+  }var gameOver = false;
 
   $table.append($tbody);
   $container.append($table);
 }
+
 
 function createBoard(n) {
   var board = [];
   
   for (var i = 0; i < n; i++) {
     board[i] = [];
-
     for (var j = 0; j < n; j++) {
       board[i][j] = 0;
     }
@@ -75,32 +79,110 @@ function createBoard(n) {
   return board;
 }
 
+
 function randomInt(n) {
   return Math.floor(Math.random() * n);
 }
 
+
+function enqueueNeighborsSmart(r, c) {
+  targetHits.push({ r: r, c: c });
+
+  var orientation = null;
+  if (targetHits.length >= 2) {
+    var first = targetHits[0];
+    var second = targetHits[1];
+    if (first.r === second.r) {
+      orientation = "horiz";
+    } else if (first.c === second.c) {
+      orientation = "vert";
+    }
+  }
+
+  function takeIfAvailable(rr, cc) {
+    if (rr < 0 || rr > 9 || cc < 0 || cc > 9) return;
+    for (var i = 0; i < availableMoves.length; i++) {
+      if (availableMoves[i].r === rr && availableMoves[i].c === cc) {
+        targetQueue.push({ r: rr, c: cc });
+        availableMoves.splice(i, 1);
+        return;
+      }
+    }
+  }
+
+  if (orientation === null) {
+    takeIfAvailable(r - 1, c); // oben
+    takeIfAvailable(r + 1, c); // unten
+    takeIfAvailable(r, c - 1); // links
+    takeIfAvailable(r, c + 1); // rechts
+  } else if (orientation === "horiz") {
+    var row = targetHits[0].r;
+    var minC = targetHits[0].c;
+    var maxC = targetHits[0].c;
+    for (var j = 1; j < targetHits.length; j++) {
+      minC = Math.min(minC, targetHits[j].c);
+      maxC = Math.max(maxC, targetHits[j].c);
+    }
+    takeIfAvailable(row, minC - 1);
+    takeIfAvailable(row, maxC + 1);
+  } else {
+    var col = targetHits[0].c;
+    var minR = targetHits[0].r;
+    var maxR = targetHits[0].r;
+    for (var j = 1; j < targetHits.length; j++) {
+      minR = Math.min(minR, targetHits[j].r);
+      maxR = Math.max(maxR, targetHits[j].r);
+    }
+    takeIfAvailable(minR - 1, col);
+    takeIfAvailable(maxR + 1, col);
+  }
+}
+
+
 function canPlace(board, r, c, len, horiz) {
   var size = board.length;
+
   for (var k = 0; k < len; k++) {
     var x = horiz ? r : r + k;
     var y = horiz ? c + k : c;
-    if (x >= size || y >= size || board[x][y] !== 0) {
+
+    if (x < 0 || x >= size || y < 0 || y >= size) {
       return false;
     }
+    if (board[x][y] !== 0) {
+      return false;
+    }
+
+    for (var dx = -1; dx <= 1; dx++) {
+      for (var dy = -1; dy <= 1; dy++) {
+        var nx = x + dx;
+        var ny = y + dy;
+        if (nx >= 0 && nx < size && ny >= 0 && ny < size) {
+          if (board[nx][ny] !== 0) {
+            return false;
+          }
+        }
+      }
+    }
   }
+
   return true;
 }
 
+
 function placeShips(board) {
-  var config = [5, 4, 3, 3, 2]; // Welche Schiffe es gibt und in welcher Größe
+  var config = [5, 4, 3, 2, 1];
   var ships = [];
+
   for (var s = 0; s < config.length; s++) {
     var len = config[s];
     var placed = false;
+
     while (!placed) {
       var horiz = Math.random() < 0.5;
       var r = randomInt(board.length);
       var c = randomInt(board.length);
+
       if (canPlace(board, r, c, len, horiz)) {
         var coords = [];
         for (var k = 0; k < len; k++) {
@@ -114,25 +196,23 @@ function placeShips(board) {
       }
     }
   }
+
   return ships;
 }
+
 
 function markShipIfSunk(ships, boardId, boardData, r, c) {
   for (var s = 0; s < ships.length; s++) {
     var ship = ships[s];
     var belongsToThisShip = false;
-
     for (var t = 0; t < ship.length; t++) {
       if (ship[t].r === r && ship[t].c === c) {
         belongsToThisShip = true;
         break;
       }
     }
+    if (!belongsToThisShip) continue;
 
-    if (belongsToThisShip === false) {
-      continue;
-    }
-    
     var allHit = true;
     for (var u = 0; u < ship.length; u++) {
       var rr = ship[u].r;
@@ -143,8 +223,7 @@ function markShipIfSunk(ships, boardId, boardData, r, c) {
         break;
       }
     }
-    
-    if (allHit === true) {
+    if (allHit) {
       for (var v = 0; v < ship.length; v++) {
         var rr2 = ship[v].r;
         var cc2 = ship[v].c;
@@ -154,62 +233,44 @@ function markShipIfSunk(ships, boardId, boardData, r, c) {
       }
       return true;
     }
-
     break;
   }
   return false;
 }
 
+
 function handleCellClick() {
-  if (!canPlay) {
-    return;
-  }
-  
+  if (!canPlay) return;
   canPlay = false;
 
   var $cell = $(this);
   var r = parseInt($cell.attr('data-row'), 10);
   var c = parseInt($cell.attr('data-col'), 10);
 
-  if ($cell.hasClass('hit')) {
-    canPlay = true;
-    return;
-  }
-
-  if ($cell.hasClass('miss')) {
-    canPlay = true;
-    return;
-  }
-
-  if ($cell.hasClass('sunk')) {
+  if ($cell.hasClass('hit') || $cell.hasClass('miss') || $cell.hasClass('sunk')) {
     canPlay = true;
     return;
   }
 
   if (computerBoard[r][c] === 1) {
     $cell.addClass('hit');
-
     var wasSunk = markShipIfSunk(computerShips, 'computerBoard', computerBoard, r, c);
-    if (wasSunk === true) {
+    if (wasSunk) {
       state.text('Schiff versenkt! Du darfst weiterhin schießen.');
     } else {
       state.text('Treffer! Du darfst nochmal schießen.');
     }
-
     canPlay = true;
     checkWin();
-
-    return;
   } else {
     $cell.addClass('miss');
     state.text('Wasser! Computer ist dran...');
-
-    window.setTimeout(function() {
+    setTimeout(function() {
       computerTurn();
     }, 2000);
-
   }
 }
+
 
 function checkWin() {
   var allSunk = true;
@@ -217,10 +278,10 @@ function checkWin() {
     for (var j = 0; j < 10; j++) {
       if (computerBoard[i][j] === 1) {
         var sel = '#computerBoard td[data-row="' + i + '"][data-col="' + j + '"]';
-        var hasHit  = $(sel).hasClass('hit');
+        var hasHit = $(sel).hasClass('hit');
         var hasSunk = $(sel).hasClass('sunk');
-        
-        if (hasHit === false && hasSunk === false) {
+
+        if (!hasHit && !hasSunk) {
           allSunk = false;
         }
       }
@@ -230,79 +291,100 @@ function checkWin() {
   if (allSunk) {
     state.text('Du hast gewonnen! 🎉');
     $('#computerBoard').off('click', 'td.cell', handleCellClick);
-
     alert('Herzlichen Glückwunsch, du hast gewonnen!');
   }
 }
 
+
 function renderPlayerShips() {
   for (var s = 0; s < playerShips.length; s++) {
     var ship = playerShips[s];
+
     for (var i = 0; i < ship.length; i++) {
       var cell = ship[i];
-      $('#playerBoard td[data-row="' + cell.r + '"][data-col="' + cell.c + '"]')
-        .addClass('ship');
+      $('#playerBoard td[data-row="' + cell.r + '"][data-col="' + cell.c + '"]').addClass('ship');
     }
   }
 }
 
+
 function getComputerMove() {
   var idx = randomInt(availableMoves.length);
-  var move = availableMoves.splice(idx, 1)[0];
-  return move;
+  return availableMoves.splice(idx, 1)[0];
 }
 
+
 function computerTurn() {
-  if (availableMoves.length === 0) {
+  if (gameOver === true) {
     return;
   }
 
-  var idx = randomInt(availableMoves.length);
-  var move = availableMoves.splice(idx, 1)[0];
+  var move;
+  if (targetQueue.length > 0) {
+    move = targetQueue.shift();
+  } else {
+    if (availableMoves.length === 0) return;
+    var idx = randomInt(availableMoves.length);
+    move = availableMoves.splice(idx, 1)[0];
+    targetHits = [];
+  }
+
   var r = move.r;
   var c = move.c;
-
   var $cell = $('#playerBoard td[data-row="' + r + '"][data-col="' + c + '"]');
 
   if (playerBoard[r][c] === 1) {
     $cell.addClass('hit');
-
     var colLetter = String.fromCharCode(65 + c);
     var wasSunk = markShipIfSunk(playerShips, 'playerBoard', playerBoard, r, c);
 
-    if (wasSunk === true) {
-      var colLetter = String.fromCharCode(65 + c);
+    if (wasSunk) {
       state.text('Computer versenkt dein Schiff auf ' + colLetter + (r + 1) + '! Er ist nochmal dran...');
+      targetQueue = [];
+      targetHits = [];
+      checkPlayerWin();
+
+      if (gameOver === true) {
+        return;
+      }
+      
+      setTimeout(function() {
+        computerTurn();
+      }, 2000);
     } else {
-      var colLetter = String.fromCharCode(65 + c);
       state.text('Computer trifft auf ' + colLetter + (r + 1) + '! Er ist nochmal dran...');
+
+      enqueueNeighborsSmart(r, c);
+      checkPlayerWin();
+
+      if (gameOver === true) {
+        return;
+      }
+
+      setTimeout(function() {
+        computerTurn();
+      }, 2000);
     }
-
-    checkPlayerWin();
-    setTimeout(function() {
-      computerTurn();
-    }, 2000);
-
-    return;
   } else {
     $cell.addClass('miss');
-
     var colLetter = String.fromCharCode(65 + c);
-    state.text('Computer verfehlt auf ' + colLetter + (r + 1) + '!');
-
+    state.text('Computer verfehlt auf ' + colLetter + (r + 1) + '. Du bist wieder dran.');
     canPlay = true;
   }
 }
 
+
 function checkPlayerWin() {
   var allSunk = true;
+
   for (var i = 0; i < 10; i++) {
     for (var j = 0; j < 10; j++) {
       if (playerBoard[i][j] === 1) {
         var sel = '#playerBoard td[data-row="' + i + '"][data-col="' + j + '"]';
-        var hasHit  = $(sel).hasClass('hit');
+        var hasHit = $(sel).hasClass('hit');
         var hasSunk = $(sel).hasClass('sunk');
-        if (hasHit === false && hasSunk === false) {
+        
+        if (!hasHit && !hasSunk) {
           allSunk = false;
         }
       }
@@ -312,6 +394,10 @@ function checkPlayerWin() {
     state.text('Verloren! Der Computer hat gewonnen. 💀');
     $('#computerBoard').off('click', 'td.cell', handleCellClick);
 
-    alert('Leider hast du verloren. Versuch es noch einmal!');
+    gameOver = true;
+
+    setTimeout(function() {
+      alert('Leider hast du verloren. Versuch es noch einmal!');
+    }, 100);
   }
 }
