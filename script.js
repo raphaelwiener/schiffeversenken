@@ -84,7 +84,7 @@ function randomInt(n) {
   return Math.floor(Math.random() * n);
 }
 
-
+// Die Funktion enqueueNeighborsSmart wurde mit hilfe von KI erstellt.
 function enqueueNeighborsSmart(r, c) {
   targetHits.push({ r: r, c: c });
 
@@ -99,6 +99,7 @@ function enqueueNeighborsSmart(r, c) {
     }
   }
 
+  // Die Funktion takeIfAvailable wurde mit hilfe von KI erstellt.
   function takeIfAvailable(rr, cc) {
     if (rr < 0 || rr > 9 || cc < 0 || cc > 9) return;
     for (var i = 0; i < availableMoves.length; i++) {
