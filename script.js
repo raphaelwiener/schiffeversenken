@@ -31,7 +31,6 @@ $(document).ready(function() {
 
 
 function createGrid($container) {
-  $container.empty();
   var letters = 'ABCDEFGHIJ'.split('');
   var size = 10;
   var $table = $('<table></table>');
