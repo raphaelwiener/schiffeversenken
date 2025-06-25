@@ -41,6 +41,11 @@ div#boards {
   background-color: #0077be;
 }
 
+.board h2 {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
 .board td.cell {
   width: 30px;
   height: 30px;
