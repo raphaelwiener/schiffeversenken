@@ -396,8 +396,23 @@ function checkPlayerWin() {
 
     gameOver = true;
 
+    revealComputerShips()
+
     setTimeout(function() {
       alert('Leider hast du verloren. Versuch es noch einmal!');
     }, 100);
+  }
+}
+
+function revealComputerShips() {
+  for (var i = 0; i < 10; i++) {
+    for (var j = 0; j < 10; j++) {
+      if (computerBoard[i][j] === 1) {
+        var $cell = $('#computerBoard td[data-row="' + i + '"][data-col="' + j + '"]');
+        if (!$cell.hasClass('hit') && !$cell.hasClass('sunk')) {
+          $cell.addClass('revealed');
+        }
+      }
+    }
   }
 }
