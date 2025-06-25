@@ -58,6 +58,10 @@ div#boards {
   padding: 0;
 }
 
+.board td.cell.revealed {
+  background-color: #000000;
+}
+
 .board td.cell.ship {
   background-color: #666;
 }
